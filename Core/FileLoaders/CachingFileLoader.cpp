@@ -258,7 +258,11 @@ void CachingFileLoader::StartReadAhead(s64 pos) {
 		// Already going.
 		return;
 	}
-	if (cacheSize_ + BLOCK_READAHEAD > MAX_BLOCKS_CACHED) {
+
+	size_t dynamicReadAhead = g_Config.iRemoteISOReadAhead > 0 ? (g_Config.iRemoteISOReadAhead >> (BLOCK_SHIFT + 2)) : 4;
+	if (dynamicReadAhead < 1) dynamicReadAhead = 1;
+
+	if (cacheSize_ + dynamicReadAhead > MAX_BLOCKS_CACHED) {
 		// Not enough space to readahead.
 		return;
 	}
@@ -266,20 +270,25 @@ void CachingFileLoader::StartReadAhead(s64 pos) {
 	aheadThreadRunning_ = true;
 	if (aheadThread_.joinable())
 		aheadThread_.join();
-	aheadThread_ = std::thread([this, pos] {
-		SetCurrentThreadName("FileLoaderReadAhead");
+	aheadThread_ = std::thread([this, pos, dynamicReadAhead] {
+		SetCurrentThreadName("RemoteIO");
+
+#ifdef __ANDROID__
+		// Attempt to boost priority in the background thread
+		pthread_setschedprio(pthread_self(), 10);
+#endif
 
 		AndroidJNIThreadContext jniContext;
 
 		std::unique_lock<std::recursive_mutex> guard(blocksMutex_);
 		s64 cacheStartPos = pos >> BLOCK_SHIFT;
-		s64 cacheEndPos = cacheStartPos + BLOCK_READAHEAD - 1;
+		s64 cacheEndPos = cacheStartPos + dynamicReadAhead - 1;
 
 		for (s64 i = cacheStartPos; i <= cacheEndPos; ++i) {
 			auto block = blocks_.find(i);
 			if (block == blocks_.end()) {
 				guard.unlock();
-				SaveIntoCache(i << BLOCK_SHIFT, BLOCK_SIZE * BLOCK_READAHEAD, Flags::NONE, true);
+				SaveIntoCache(i << BLOCK_SHIFT, BLOCK_SIZE * dynamicReadAhead, Flags::NONE, true);
 				break;
 			}
 		}

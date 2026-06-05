@@ -131,7 +131,7 @@ int HTTPFileLoader::SendHEAD(const Url &url, std::vector<std::string> &responseH
 	double timeout = 20.0;
 
 	client_.SetDataTimeout(timeout);
-	Connect(10.0);
+	Connect(20.0);
 	if (!connected_) {
 		ERROR_LOG(Log::Loader, "HTTP request failed, failed to connect: %s port %d (resource: '%s')", url.Host().c_str(), url.Port(), url.Resource().c_str());
 		latestError_ = "Could not connect (refused to connect)";
@@ -188,7 +188,7 @@ size_t HTTPFileLoader::ReadAt(s64 absolutePos, size_t bytes, void *data, Flags f
 		return 0;
 	}
 
-	Connect(10.0);
+	Connect(20.0);
 	if (!connected_) {
 		return 0;
 	}
