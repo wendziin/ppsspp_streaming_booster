@@ -361,6 +361,14 @@ void RemoteISOScreen::CreateSettingsTab(UI::ViewGroup *remoteisoSettings) {
 	remoteisoSettings->Add(new CheckBox(&g_Config.bRemoteISOManual, ri->T("Manual Mode Client", "Manually configure client")));
 	remoteisoSettings->Add(new CheckBox(&g_Config.bRemoteTab, ri->T("Show Remote tab on main screen")));
 
+	// Custom Streaming Settings
+	remoteisoSettings->Add(new ItemHeader(ri->T("Streaming Tweaks (Advanced)", "Streaming Tweaks (Advanced)")));
+	remoteisoSettings->Add(new TextView(ri->T("StreamingWarning", "Note: Values above 1MB are for Heavy/Open World games only."), new LinearLayoutParams(Margins(12, 0, 0, 5))))->SetFocusable(false);
+	
+	remoteisoSettings->Add(new PopupSliderChoice(&g_Config.iRemoteISOCacheSizeMB, 0, 1024, 128, ri->T("RemoteISOCacheSizeMB", "Client Cache Size (MB)"), 32, screenManager()));
+	remoteisoSettings->Add(new PopupSliderChoice(&g_Config.iRemoteISOReadAhead, 262144, 8388608, 1048576, ri->T("RemoteISOReadAhead", "Read Ahead Buffer (Bytes)"), 262144, screenManager()));
+	remoteisoSettings->Add(new PopupSliderChoice(&g_Config.iRemoteISOSocketBuffer, 131072, 4194304, 524288, ri->T("RemoteISOSocketBuffer", "Socket Buffer Size (Bytes)"), 131072, screenManager()));
+
 	if (System_GetPropertyBool(SYSPROP_HAS_FOLDER_BROWSER)) {
 		static const char *shareTypes[] = { "Recent games", "Choose directory" };
 		remoteisoSettings->Add(new PopupMultiChoice(&g_Config.iRemoteISOShareType, ri->T("Files to share"), shareTypes, 0, ARRAY_SIZE(shareTypes), I18NCat::REMOTEISO, screenManager()));

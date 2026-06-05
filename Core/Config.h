@@ -232,6 +232,9 @@ public:
 	bool bCompressSymbols;
 	bool bCacheFullIsoInRam;
 	int iRemoteISOPort; // Also used for serving a local remote debugger.
+	int iRemoteISOCacheSizeMB;
+	int iRemoteISOReadAhead;
+	int iRemoteISOSocketBuffer;
 	std::string sLastRemoteISOServer;
 	int iLastRemoteISOPort;
 	bool bRemoteISOManual;
