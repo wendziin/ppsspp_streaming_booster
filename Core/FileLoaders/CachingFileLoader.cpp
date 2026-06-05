@@ -21,7 +21,13 @@
 
 #include "Common/Thread/ThreadUtil.h"
 #include "Common/TimeUtil.h"
+#include "Core/Config.h"
 #include "Core/FileLoaders/CachingFileLoader.h"
+
+#ifdef __ANDROID__
+#include <pthread.h>
+#include <sys/resource.h>
+#endif
 
 // Takes ownership of backend.
 CachingFileLoader::CachingFileLoader(FileLoader *backend)
@@ -155,13 +161,18 @@ void CachingFileLoader::SaveIntoCache(s64 pos, size_t bytes, Flags flags, bool r
 
 	std::lock_guard<std::recursive_mutex> guard(blocksMutex_);
 	size_t blocksToRead = 0;
+
+	// Use dynamic limit from config (default 1MB if not set)
+	size_t dynamicMaxBlocks = g_Config.iRemoteISOReadAhead > 0 ? (g_Config.iRemoteISOReadAhead >> BLOCK_SHIFT) : 16;
+	if (dynamicMaxBlocks < 4) dynamicMaxBlocks = 4; // Safety floor
+
 	for (s64 i = cacheStartPos; i <= cacheEndPos; ++i) {
 		auto block = blocks_.find(i);
 		if (block != blocks_.end()) {
 			break;
 		}
 		++blocksToRead;
-		if (blocksToRead >= MAX_BLOCKS_PER_READ) {
+		if (blocksToRead >= dynamicMaxBlocks) {
 			break;
 		}
 	}
@@ -274,8 +285,8 @@ void CachingFileLoader::StartReadAhead(s64 pos) {
 		SetCurrentThreadName("RemoteIO");
 
 #ifdef __ANDROID__
-		// Attempt to boost priority in the background thread
-		pthread_setschedprio(pthread_self(), 10);
+		// Attempt to boost priority in the background thread (Lower value = Higher priority)
+		setpriority(PRIO_PROCESS, 0, -10); 
 #endif
 
 		AndroidJNIThreadContext jniContext;

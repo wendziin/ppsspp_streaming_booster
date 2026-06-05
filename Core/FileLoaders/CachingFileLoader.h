@@ -52,9 +52,7 @@ private:
 	enum {
 		BLOCK_SIZE = 65536,
 		BLOCK_SHIFT = 16,
-		MAX_BLOCKS_PER_READ = 32,
 		MAX_BLOCKS_CACHED = 4096, // 256 MB
-		BLOCK_READAHEAD = 8,
 	};
 
 	s64 filesize_ = 0;
