@@ -363,7 +363,7 @@ void RemoteISOScreen::CreateSettingsTab(UI::ViewGroup *remoteisoSettings) {
 
 	// Custom Streaming Settings
 	remoteisoSettings->Add(new ItemHeader(ri->T("Streaming Tweaks (Advanced)", "Streaming Tweaks (Advanced)")));
-	remoteisoSettings->Add(new TextView(ri->T("StreamingWarning", "Note: Values above 1MB are for Heavy/Open World games only."), new LinearLayoutParams(Margins(12, 0, 0, 5))))->SetFocusable(false);
+	remoteisoSettings->Add(new TextView(ri->T("StreamingWarning", "Note: 1MB+ is for Open World games. 512KB is recommended for TCL TVs."), new LinearLayoutParams(Margins(12, 0, 0, 5))))->SetFocusable(false);
 	
 	remoteisoSettings->Add(new PopupSliderChoice(&g_Config.iRemoteISOCacheSizeMB, 0, 1024, 128, ri->T("RemoteISOCacheSizeMB", "Client Cache Size (MB)"), 32, screenManager()));
 	remoteisoSettings->Add(new PopupSliderChoice(&g_Config.iRemoteISOReadAhead, 262144, 8388608, 1048576, ri->T("RemoteISOReadAhead", "Read Ahead Buffer (Bytes)"), 262144, screenManager()));

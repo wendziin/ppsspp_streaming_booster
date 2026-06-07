@@ -246,7 +246,7 @@ size_t HTTPFileLoader::ReadAt(s64 absolutePos, size_t bytes, void *data, Flags f
 	}
 
 	// TODO: Keepalive instead.
-	Disconnect();
+	// Disconnect(); <-- REMOVED for Keep-Alive support
 
 	if (!supportedResponse) {
 		ERROR_LOG(Log::Loader, "HTTP server did not respond with the range we wanted.");
