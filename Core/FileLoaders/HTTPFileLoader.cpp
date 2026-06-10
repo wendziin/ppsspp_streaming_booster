@@ -19,8 +19,10 @@
 
 #include "Common/Log.h"
 #include "Common/StringUtils.h"
+#include "Common/TimeUtil.h"
 #include "Core/Config.h"
 #include "Core/FileLoaders/HTTPFileLoader.h"
+#include "Core/Debugger/WebSocket/NetBroadcaster.h"
 
 HTTPFileLoader::HTTPFileLoader(const ::Path &filename)
 	: url_(filename.ToString()), progress_(&cancel_), filename_(filename), client_(nullptr) {  // no custom resolver support
@@ -195,10 +197,12 @@ size_t HTTPFileLoader::ReadAt(s64 absolutePos, size_t bytes, void *data, Flags f
 
 	char requestHeaders[4096];
 	// Note that the Range header is *inclusive*.
-	snprintf(requestHeaders, sizeof(requestHeaders),
-		"Range: bytes=%lld-%lld\r\n", absolutePos, absoluteEnd - 1);
+	char rangeHeader[256];
+	snprintf(rangeHeader, sizeof(rangeHeader), "bytes=%lld-%lld", absolutePos, absoluteEnd - 1);
+	snprintf(requestHeaders, sizeof(requestHeaders), "Range: %s\r\n", rangeHeader);
 
 	http::RequestParams req(url_.Resource(), "*/*");
+	double startTime = time_now_d();
 	int err = client_.SendRequest("GET", req, requestHeaders, &progress_);
 	if (err < 0) {
 		latestError_ = "Invalid response reading data";
@@ -247,6 +251,10 @@ size_t HTTPFileLoader::ReadAt(s64 absolutePos, size_t bytes, void *data, Flags f
 
 	// TODO: Keepalive instead.
 	// Disconnect(); <-- REMOVED for Keep-Alive support
+
+	double duration = time_now_d() - startTime;
+	size_t readBytes = output.size();
+	NetBroadcaster::RecordRequest(url_.ToString(), "GET", rangeHeader, readBytes, duration, code);
 
 	if (!supportedResponse) {
 		ERROR_LOG(Log::Loader, "HTTP server did not respond with the range we wanted.");

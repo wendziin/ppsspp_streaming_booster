@@ -48,6 +48,7 @@
 #include "Core/Debugger/WebSocket/InputBroadcaster.h"
 #include "Core/Debugger/WebSocket/LogBroadcaster.h"
 #include "Core/Debugger/WebSocket/SteppingBroadcaster.h"
+#include "Core/Debugger/WebSocket/NetBroadcaster.h"
 
 #include "Core/Debugger/WebSocket/BreakpointSubscriber.h"
 #include "Core/Debugger/WebSocket/CPUCoreSubscriber.h"
@@ -80,6 +81,7 @@ static const std::vector<SubscriberInit> subscribers({
 	&WebSocketReplayInit,
 	&WebSocketSteppingInit,
 	&WebSocketClientConfigInit,
+	&WebSocketNetInit,
 });
 
 // To handle webserver restart, keep track of how many running.

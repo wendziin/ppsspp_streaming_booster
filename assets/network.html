@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PPSSPP Network Debugger</title>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: #e0e0e0; margin: 0; padding: 20px; }
+        h2 { color: #00ffff; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #333; padding: 10px; text-align: left; font-family: monospace; }
+        th { background: #1a1a1a; color: #fff; }
+        tr:nth-child(even) { background: #181818; }
+        tr:hover { background: #222; }
+        .hit { color: #4caf50; }
+        .miss { color: #f44336; }
+        .stats { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 20px; }
+        .stat-item { font-size: 1.1em; }
+        .stat-value { font-weight: bold; color: #00ffff; }
+    </style>
+</head>
+<body>
+    <h2>📡 PPSSPP Network Monitor (F12 Style)</h2>
+    <div class="stats">
+        <div class="stat-item">Requests: <span id="total-req" class="stat-value">0</span></div>
+        <div class="stat-item">Avg Speed: <span id="avg-speed" class="stat-value">0 MB/s</span></div>
+        <div class="stat-item">Total Data: <span id="total-data" class="stat-value">0 MB</span></div>
+    </div>
+    <table id="network-table">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Method</th>
+                <th>Range</th>
+                <th>Size</th>
+                <th>Duration</th>
+                <th>Speed</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="network-body">
+        </tbody>
+    </table>
+
+    <script>
+        const ws = new WebSocket(`ws://${window.location.host}/debugger`);
+        const body = document.getElementById('network-body');
+        const totalReqEl = document.getElementById('total-req');
+        const avgSpeedEl = document.getElementById('avg-speed');
+        const totalDataEl = document.getElementById('total-data');
+
+        let totalRequests = 0;
+        let totalBytes = 0;
+        let totalDuration = 0;
+
+        ws.onopen = () => {
+            console.log('Connected to PPSSPP Debugger');
+            ws.send(JSON.stringify({ event: 'version' }));
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.event === 'net.request') {
+                addRequest(data);
+            }
+        };
+
+        function addRequest(req) {
+            totalRequests++;
+            totalBytes += req.size;
+            totalDuration += req.duration;
+
+            const speed = (req.size / 1024 / 1024) / req.duration; // MB/s
+            const row = body.insertRow(0);
+            
+            const time = new Date().toLocaleTimeString();
+            const sizeKB = (req.size / 1024).toFixed(1) + ' KB';
+            const durationMS = (req.duration * 1000).toFixed(0) + ' ms';
+            const speedMB = speed.toFixed(2) + ' MB/s';
+
+            row.innerHTML = `
+                <td>${time}</td>
+                <td>${req.method}</td>
+                <td>${req.range}</td>
+                <td>${sizeKB}</td>
+                <td>${durationMS}</td>
+                <td>${speedMB}</td>
+                <td>${req.status}</td>
+            `;
+
+            // Keep only last 50 rows
+            if (body.rows.length > 50) body.deleteRow(50);
+
+            // Update stats
+            totalReqEl.innerText = totalRequests;
+            totalDataEl.innerText = (totalBytes / 1024 / 1024).toFixed(2) + ' MB';
+            avgSpeedEl.innerText = ((totalBytes / 1024 / 1024) / totalDuration).toFixed(2) + ' MB/s';
+        }
+    </script>
+</body>
+</html>

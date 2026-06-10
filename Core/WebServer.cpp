@@ -451,6 +451,12 @@ static void HandleFallback(const http::ServerRequest &request) {
 			return;
 		}
 
+		if (request.resource() == "/network.html") {
+			if (ServeAssetFile(request)) {
+				return;
+			}
+		}
+
 		// Actually serve debugger files.
 		if (startsWith(request.resource(), "/debugger/")) {
 			if (ServeAssetFile(request)) {
