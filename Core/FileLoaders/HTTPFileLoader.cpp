@@ -262,7 +262,6 @@ size_t HTTPFileLoader::ReadAt(s64 absolutePos, size_t bytes, void *data, Flags f
 		return 0;
 	}
 
-	size_t readBytes = output.size();
 	output.Take(readBytes, (char *)data);
 	filepos_ = absolutePos + readBytes;
 	return readBytes;
